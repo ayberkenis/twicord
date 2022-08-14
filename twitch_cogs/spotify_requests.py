@@ -28,6 +28,7 @@ class SpotifyClient:
                      'client_id': self.client_id,
                      'response_type': 'code',
                      'redirect_uri': self.redirect_uri}
+
         self.access_token = None
         self.scopes = "user-read-currently-playing user-read-playback-state " \
                       "user-read-playback-position " \
