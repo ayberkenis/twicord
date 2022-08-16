@@ -4,14 +4,14 @@ app = web.Application()
 from utils.dbcontrol import Database
 from twitch_cogs.spotify_requests import SpotifyClient
 import base64
-
+import os
 import json
 class WebServer:
     """This class will only be used for Spotify Authorization Code Flow to be able to add songs to the current playback queue."""
     def __init__(self):
-        self.client_id = '9084fb115cc446cf9b14f15ab3ba7a03'
-        self.client_secret = 'b7b1b1c694c74076813ec18ebc91db00'
-        self.redirect_uri = 'http://127.0.0.1:5000/callback'
+        self.client_id = os.environ['spotify_client_id']
+        self.client_secret = os.environ['spotify_secret']
+        self.redirect_uri = os.environ['spotify_redirect_uri']
         self.code = None
         self.db = Database()
     routes = web.RouteTableDef()
