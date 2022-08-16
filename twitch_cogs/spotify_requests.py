@@ -60,6 +60,7 @@ class SpotifyClient:
         except Exception as e:
             return {"error": e}
 
+
     async def get_access_token(self):
         self.access_token = await self.db.fetch('SELECT spotify_access_token FROM credentials')
         return self.access_token[0]
