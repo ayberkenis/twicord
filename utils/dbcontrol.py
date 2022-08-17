@@ -1,4 +1,5 @@
 import aiosqlite
+from aiosqlite import Row
 import os
 
 class Database:
@@ -16,13 +17,28 @@ class Database:
                                 'spotify_scopes text, spotify_refresh_token text)')
         await self.execute('INSERT OR IGNORE INTO credentials (username, twitch_client_id) VALUES (?, ?)', (username, user_id))
 
-    async def fetch(self, sql):
+    async def fetch(self, sql, *params):
         async with aiosqlite.connect(self.db_path) as db:
-            async with db.execute(sql) as cursor:
-                async for row in cursor:
-                    return row
+            db.row_factory = Row
+            async with db.execute(sql, *params) as cursor:
+                return await cursor.fetchall()
 
     async def execute(self, sql, *params):
         async with aiosqlite.connect(self.db_path) as db:
+            db.row_factory = Row
             await db.execute(sql, *params)
             await db.commit()
+
+    async def fetch_value(self, sql, *params):
+        async with aiosqlite.connect(self.db_path) as db:
+            db.row_factory = Row
+            async with db.execute(sql, *params) as cursor:
+                return await cursor.fetchone()[0]
+
+    async def get_credentials(self):
+        async with aiosqlite.connect(self.db_path) as db:
+            db.row_factory = Row
+            async with db.execute("SELECT * FROM credentials") as cursor:
+                async for row in cursor:
+                    return row
+
