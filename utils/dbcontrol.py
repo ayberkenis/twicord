@@ -9,13 +9,30 @@ class Database:
 
 
 
-    async def first_setup(self, username, user_id):
-        await self.execute('CREATE TABLE IF NOT EXISTS credentials '
-                                '(username text PRIMARY KEY, twitch_client_id text, twitch_token text, discord_client_id text, discord_token text, '
-                                'spotify_client_id text, spotify_client_secret text, '
-                                'spotify_code text, spotify_redirect_uri text, spotify_access_token text, '
-                                'spotify_scopes text, spotify_refresh_token text)')
-        await self.execute('INSERT OR IGNORE INTO credentials (username, twitch_client_id) VALUES (?, ?)', (username, user_id))
+    async def first_setup(self):
+        await self.create_table('credentials', id='varchar', name='TEXT', value='TEXT',
+                                timestamp='TIMESTAMP DEFAULT CURRENT_TIMESTAMP')
+        await self.create_table('channels', name='TEXT', initial='BOOL DEFAULT 0',
+                                timestamp='TIMESTAMP DEFAULT CURRENT_TIMESTAMP')
+        await self.create_table('custom_commands', id='varchar PRIMARY KEY', channel='TEXT', name='TEXT',
+                                response='TEXT', cooldown='INTEGER', last_usage_timestamp='TIMESTAMP',
+                                timestamp='TIMESTAMP DEFAULT CURRENT_TIMESTAMP')
+        await self.create_table('settings', id='varchar', channel='TEXT', name='TEXT', value='TEXT',
+                                timestamp='TIMESTAMP DEFAULT CURRENT_TIMESTAMP')
+        await self.create_table('sound_files', id='varchar PRIMARY KEY',channel='TEXT',  command='TEXT',
+                                additional_response='TEXT', path='TEXT', volume='INTEGER DEFAULT 50',
+                                last_usage_timestamp='TIMESTAMP', timestamp='TIMESTAMP DEFAULT CURRENT_TIMESTAMP')
+        await self.create_table('timers', id='varchar PRIMARY KEY', channel='TEXT', name='TEXT',
+                                response='TEXT', interval='INTEGER', min_chat='INTEGER',
+                                is_also_command='INTEGER', alternate='BOOL DEFAULT FALSE',timestamp='TIMESTAMP DEFAULT CURRENT_TIMESTAMP')
+        await self.create_table('spotify_requests', id='varchar PRIMARY KEY', channel='TEXT', name='TEXT', request='TEXT',
+                                requester_username='TEXT', requester_id='TEXT', spotify_uri='TEXT',
+                                timestamp='TIMESTAMP DEFAULT CURRENT_TIMESTAMP')
+
+    async def create_table(self, table_name, **kwargs):
+        build_str = ', '.join(f'{k} {v}' for k, v in kwargs.items())
+        await self.execute(f'CREATE TABLE IF NOT EXISTS {table_name} ({build_str})')
+
 
     async def fetch(self, sql, *params):
         async with aiosqlite.connect(self.db_path) as db:

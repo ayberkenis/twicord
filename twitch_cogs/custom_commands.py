@@ -33,7 +33,7 @@ class CustomCommands(commands.Cog):
     async def check_is_a_custom(self, content):
         data = await self.bot.db.fetch('SELECT * FROM custom_commands WHERE name = ?', [content[1:], ])
 
-        return data[0]
+        return data
 
     async def update_last_usage(self, cmd_name):
         await self.bot.db.execute('UPDATE custom_commands SET last_usage_timestamp = ? WHERE name = ?',

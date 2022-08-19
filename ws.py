@@ -2,12 +2,12 @@ from utils.dbcontrol import Database
 import aiohttp
 import base64
 import os
-from quart import Quart, request
+from quart import Quart, request, render_template
 import logging
 from quart.logging import default_handler
 
 
-quart = Quart(__name__)
+quart = Quart(__name__, template_folder='webserver/templates', static_folder='webserver/static')
 db = Database()
 quartlogger = logging.getLogger('quart.app')
 quartlogger.removeHandler(default_handler)
@@ -15,6 +15,8 @@ quartlogger.setLevel(logging.DEBUG)
 fh = logging.FileHandler('logs/webserver.log')  # Log to file
 
 quart.logger.addHandler(fh)
+
+
 
 async def refresh_access_token():
     credentials = await db.get_credentials()
@@ -53,7 +55,11 @@ async def code_to_access_token(code):
 
 @quart.route('/')
 async def index():
-    return 'Hello World! 223'
+    return await render_template('index.html')
+
+@quart.route('/setup')
+async def setup_twicord():
+    return await render_template('setup.html')
 
 @quart.route('/callback', methods=['GET', 'POST'])
 async def callback():
