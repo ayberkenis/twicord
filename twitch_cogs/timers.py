@@ -2,10 +2,15 @@ from twitchio.ext import commands, routines
 import asyncio
 from datetime import datetime
 import time
+import twitchio
 
 
 class Timer:
     def __init__(self, data):
+        """
+        data must be a dict from the sqlite3 database.
+        :param data:
+        """
         self.data = data
         self.id = self.data['id']
         self.name = self.data['name']
@@ -22,13 +27,25 @@ class Timers(commands.Cog):
         self.bot = bot
         self.all_timers = None
         self.timestamp = None
-        self.messages_sent = 0
+        self.messages_sent = {}
 
     async def create_task(self, func:callable, *args, **kwargs):
-        print(func.__name__)
+        """
+        Creates an async task for a function.
+        :param func:
+        :param args:
+        :param kwargs:
+        :return:
+        """
+
         return await asyncio.create_task(func(*args, **kwargs))
 
     def dict_from_row(self, row):
+        """
+        Converts a row from the database to a dictionary.
+        :param row:
+        :return: list of dictionaries
+        """
         lists_of_dicts = []
         for i in row:
             lists_of_dicts.append(Timer(i))
@@ -36,14 +53,20 @@ class Timers(commands.Cog):
         return lists_of_dicts
 
     async def cache_timers(self):
+        """
+        Caches all timers.
+        :return:
+        """
         self.all_timers = await self.bot.db.fetch('SELECT * FROM timers')
         self.all_timers = self.dict_from_row(self.all_timers)
         return self.all_timers
 
 
-
-
     async def function_worker(self):
+        """
+        Creates a task for each timer.
+        :return:
+        """
         await self.bot.wait_for_ready()
         count = 0
         start = time.time()
@@ -61,13 +84,20 @@ class Timers(commands.Cog):
                 await channel.send(f"Count: {count} | Time:{round(end-start, 2)} | {timer_event['response']}")
             await asyncio.sleep(2.5)
 
+    async def cache_message_count(self, channel: twitchio.Channel):
+        if channel.name not in self.messages_sent.keys():
+            self.messages_sent[channel.name] = 0
+        else:
+            self.messages_sent[channel.name] += 1
+
+
     @commands.Cog.event()
     async def event_message(self, message):
         if message.echo:
             return
 
-        self.messages_sent = self.messages_sent + 1 # save messages sent to the cog itself to be able to keep track of how many messages are sent
-
+        await self.cache_message_count(message.channel)
+        print(self.messages_sent[message.channel.name])
         await self.bot.handle_commands(message)
 
 
@@ -76,6 +106,7 @@ class Timers(commands.Cog):
         await self.create_task(self.cache_timers)
         await self.create_task(self.function_worker)
 
+
     @commands.command()
     async def add_timer(self, ctx: commands.Context, name, interval, min_chat, is_also_command, *, response):
         await self.bot.db.execute('INSERT INTO timers (name, interval, min_chat, is_also_command, response) VALUES (?, ?, ?, ?, ?)',
@@ -83,5 +114,4 @@ class Timers(commands.Cog):
         await ctx.send(f'Timer {name} has been added.')
 
 def prepare(bot: commands.Bot):
-    # Load our cog with this module...
     bot.add_cog(Timers(bot))
