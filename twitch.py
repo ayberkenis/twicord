@@ -16,8 +16,6 @@ class Bot(commands.Bot):
         await self.db.first_setup()
 
 
-
-
     def load_cogs(self):
         for file in sorted(os.listdir("twitch_cogs")):
             if file.endswith(".py"):

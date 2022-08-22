@@ -1,11 +1,11 @@
-import asyncio
-import json
+import sqlite3
 from twitchio.ext import commands
 import aiohttp
 import uuid
 from utils.dbcontrol import Database
 from utils import exceptions
 import os
+
 
 class SpotifyTrackObject:
     def __init__(self, data):
@@ -18,6 +18,7 @@ class SpotifyTrackObject:
         self.popularity = self.data['popularity']
         self.id = self.data['id']
         self.track_uri = self.data['uri']
+
 
 class SpotifyClient:
     def __init__(self):
@@ -39,20 +40,25 @@ class SpotifyClient:
     async def build_url(self):
         scopes = self.scopes.replace(' ', '%20')
         state = str(uuid.uuid4())[8]
-        url = f"https://accounts.spotify.com/authorize?client_id={self.client_id}&response_type=code&redirect_uri={self.redirect_uri}&scope={scopes}&state={state}"
+        url = f"https://accounts.spotify.com/authorize?client_id={self.client_id}" \
+              f"&response_type=code&redirect_uri={self.redirect_uri}" \
+              f"&scope={scopes}&state={state}"
         return url
 
     async def renew_notification(self, ctx):
-        await ctx.send(
-            f"You did not setup Spotify authorization yet. You can use this URL to login and save it.")
+        await ctx.send(f"You did not setup Spotify authorization yet. You can use this URL to login and save it.")
         await ctx.send(f"{await self.build_url()}")
 
     async def renew_access_token(self, refresh_token):
         pass
 
     async def get_access_token(self):
-        self.access_token = await self.db.fetch('SELECT spotify_access_token FROM credentials')
-        return self.access_token[0]
+        try:
+            creds = await self.db.get_credentials('spotify_access_token')
+            self.access_token = creds
+            return self.access_token
+        except sqlite3.OperationalError:
+            raise exceptions.NoSuchColumn("No such column in database.")
 
     async def request(self, base_url, access_token=None, endpoint=None, query=None):
         headers = {"Authorization": f"Bearer {await self.get_access_token()}"}
@@ -64,7 +70,6 @@ class SpotifyClient:
         except Exception as e:
             raise exceptions.RequestError(f"Error while requesting Spotify API: {e}")
 
-
     async def get_song(self, ctx, query):
         results = await self.request(f"https://api.spotify.com/v1/search?q={query}&type=track,artist")
 
@@ -75,10 +80,9 @@ class SpotifyClient:
                 await self.renew_notification(ctx)
                 raise exceptions.SpotifyAccessTokenExpired(f"Spotify access token has expired. Please renew your access token.")
 
-        except KeyError:
+        except KeyError and exceptions.NoSuchColumn:
             await self.renew_notification(ctx)
             raise exceptions.SpotifySongNotFound(f"Could not find song `{query}` on Spotify API.")
-
 
     async def add_item_to_playback_queue(self, ctx, query):
         song = await self.get_song(ctx, query)
@@ -97,34 +101,30 @@ class SpotifyRequests(commands.Cog):
         self.db = Database()
 
 
-
     @commands.command()
     async def sr(self, ctx: commands.Context, *, query=None):
-            if query:
-                song = await self.spotify.add_item_to_playback_queue(ctx, query)
-                if song:
-                    await ctx.send(f'{song.name} has been added to the queue.')
-                else:
-                    await self.spotify.renew_notification(ctx)
+        if query:
+            song = await self.spotify.add_item_to_playback_queue(ctx, query)
+            if song:
+                await ctx.send(f'{song.name} has been added to the queue.')
             else:
-                await ctx.send('Sıraya ekleyebilmem için bir şarkı eklemelisiniz.')
-
+                await self.spotify.renew_notification(ctx)
+        else:
+            await ctx.send('You need to declare a song name for me to add it to the queue.')
 
 
 
     @commands.Cog.event()
     async def event_message(self, message):
-        # An event inside a cog!
         if message.echo:
             return
 
     @commands.Cog.event("event_ready")
     async def event_ready(self):
-        print(self.spotify.access_token)
+        pass
 
 
 def prepare(bot: commands.Bot):
-    # Load our cog with this module...
     bot.add_cog(SpotifyRequests(bot))
 
 

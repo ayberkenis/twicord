@@ -49,3 +49,6 @@ class DiscordAccessError(TwicordError):
 class DiscordAPIError(TwicordError):
     pass
 
+
+class NoSuchColumn(TwicordError):
+    pass

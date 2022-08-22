@@ -1,4 +1,12 @@
+/*
+THIS CSS IS MADE BY TWICORD TEAM.
+FEEL FREE TO USE IT ON YOUR OWN PROJECT.
+WHO KNOWS? MAYBE WE'LL SHARE IT AS A SEPARATE CSS FRAMEWORK.
+*/
+
+
 @import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
+
 
 html {
   font-family: 'Poppins', sans-serif;
@@ -6,4 +14,92 @@ html {
   line-height: 1.5;
   color: #333;
   background-color: #fff;
+}
+
+.main-container {
+    width: 100%;
+}
+
+.display-wrapper {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+.twiflex {
+    display: flex;
+}
+.twiflex.dir-column {
+    flex-direction: column;
+}
+.twiflex.dir.row {
+    flex-direction: row;
+}
+.twiflex.jcc {
+    justify-content: center;
+}
+.twiflex.jcsa {
+    justify-content: space-around;
+}
+.twiflex.jcsb {
+    justify-content: space-between;
+}
+.twiflex.jcse {
+    justify-content: space-evenly;
+}
+.twiflex.ais {
+    align-items: start;
+}
+.twiflex.aie {
+    align-items: end;
+}
+.twiflex.aic {
+    align-items: center;
+}
+
+.button {
+    border: none;
+    color: white;
+    padding: 15px 32px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    margin: 4px 2px;
+    cursor: pointer;
+
+}
+
+.button-rounded {
+    border: none;
+    color: white;
+    padding: 15px 32px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    margin: 4px 2px;
+    cursor: pointer;
+    border-radius: 5px;
+}
+
+
+.button.green {
+    background-color: #4CAF50;
+}
+
+.button.red {
+    background-color: #f44336;
+}
+
+.button.gray {
+    background-color: #e0e0e0;
+}
+
+.button.black {
+    background-color: #000;
+}
+
+.button.blue {
+    background-color: #0080ff;
 }
